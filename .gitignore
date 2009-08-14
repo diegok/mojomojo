@@ -1,5 +1,6 @@
 mojomojo.db
 mojomojo_local.conf
+plucene/*
 blib/*
 inc/*
 index/*
@@ -16,3 +17,4 @@ MojoMojo-*
 .includepath
 .project
 *.out
+.screenrc
