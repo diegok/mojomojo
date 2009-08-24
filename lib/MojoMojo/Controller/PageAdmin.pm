@@ -154,6 +154,11 @@ sub edit : Global FormConfig {
                 $c->loc('END OF CONFLICT'));
             return;
         }
+        # Format content body and store the result in content.precompiled 
+        # This gives "go juice" to MojoMojo page delivery.
+        my $precompiled_body = $valid->{'body'};
+        MojoMojo->call_plugins( 'format_content', \$precompiled_body, $c, $page );
+        $valid->{'precompiled'} = $precompiled_body;
 
         $page->update_content(%$valid);
 
