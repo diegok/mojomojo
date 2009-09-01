@@ -30,12 +30,11 @@ requires(
     'Catalyst::Plugin::Static::Simple'             => '0.07',
     'Catalyst::Plugin::Unicode'                    => '0.8',
     'Catalyst::View::TT'                           => '0.23',
-    'Catalyst::View::JSON'                         => 0,
+    'Catalyst::View::JSON'                         => '0.26',
     'Catalyst::View::Email::Template'              => 0,
     'Config::General'                              => 0,
     'Config::JFDI'                                 => 0,
     'Crypt::CBC'                                   => '2.12',    # FormFu
-    'Data::FormValidator::Constraints::DateTime'   => 0,
     'Data::Page'                                   => '2.00',
     'DateTime'                                     => '0.28',
     'DateTime::Format::Mail'                       => 0,
