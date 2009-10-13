@@ -18,3 +18,4 @@ MojoMojo-*
 .project
 *.out
 .screenrc
+.directory
