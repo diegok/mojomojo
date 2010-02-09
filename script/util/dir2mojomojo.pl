@@ -4,19 +4,23 @@ BEGIN { $ENV{CATALYST_DEBUG} = 0 }
 use strict;
 use warnings;
 use FindBin '$Bin';
-use lib "$Bin/../lib";
+use lib "$Bin/../../lib";
 use MojoMojo::Schema;
 use Config::JFDI;
-#use Term::Prompt;
-use  MojoMojo::Formatter::File;
+use MojoMojo::Formatter::File;
 use Path::Class ();
 use Getopt::Long;
+use MojoMojo::Formatter::File::Image;
+#use MojoMojo;
+#use MojoMojo::Model::Search;
 
-my($DIR, $URL_DIR, $debug, $help);
+
+my($DIR, $URL_DIR, $EXCLUDE, $debug, $help);
 GetOptions (  'dir=s'        => \$DIR,
               'urlbase=s'    => \$URL_DIR,
-              'debug'         => \$debug,
-              'help'          => \$help ) or die &Usage;
+              'exclude=s'    => \$EXCLUDE,
+              'debug'        => \$debug,
+              'help'         => \$help ) or die &Usage;
 
 
 $debug=0 if ( ! $debug);
@@ -27,8 +31,12 @@ if ( $help || ! $DIR || ! $URL_DIR ){
   exit 1;
 }
 
-$URL_DIR = "$URL_DIR/";
+$DIR =~ s/\/$//;
+$DIR =~ s/~/$ENV{HOME}/;
 
+#-----------------------------------------------------------------------------#
+# Connect to database
+#-----------------------------------------------------------------------------#
 my $jfdi = Config::JFDI->new(name => "MojoMojo");
 my $config = $jfdi->get;
 
@@ -62,21 +70,28 @@ my $body;
 my $urlpage;
 $rootdir->recurse(callback => sub {
             my ($entry) = @_;
+	    return if ( defined $EXCLUDE && grep(/$EXCLUDE/, $entry ));
             push @files, $entry unless ( $entry eq $DIR );
         });
 
 
-createpage($URL_DIR, "{{dir $DIR}}", $person);
+my $exclude;
+$exclude="exclude=$EXCLUDE" if $EXCLUDE;
+createpage($URL_DIR, "{{dir $DIR $exclude}}", $person);
 
 foreach my $f (@files){
 
+  next if ( ! -r $f );
+
   $urlpage = $f;
   $urlpage =~ s/$DIR//;
-  $urlpage =~ s/\./_/;
-  $urlpage = $URL_DIR . $urlpage;
+  $f =~ /.*\.(.*)$/;
+  $urlpage =~ s/\./_/
+    if ( ! MojoMojo::Formatter::File::Image->can_format($1) );
+  $urlpage = "${URL_DIR}${urlpage}";
 
   if ( ref $f eq 'Path::Class::Dir'){
-    $body = "{{dir $f}}";
+    $body = "{{dir $f $exclude}}";
   }
   else{
     my $plugin   = MojoMojo::Formatter::File->plugin($f);
@@ -86,55 +101,30 @@ foreach my $f (@files){
     }
     else {
       print STDERR "Can't find plugin for $f !!!\n";
-      $body = "{{file UNKOWN_PLUGIN $f}}";
+      $body = "{{ file UNKOWN_PLUGIN $f}}";
     }
   }
 
-  createpage($urlpage,$body, $person);
+  $schema->resultset('Page')->create_page($urlpage,$body, $person);
 }
-exit 0;
 
 
 
-
-
-
-# update the search index with the new content
-#$schema->resultset('Page')->set_paths($page);
-
-#my $search=MojoMojo::Model::Search->new;
-#$search->index_page($page);
-
-
-
-sub createpage{
-  my ($url, $body, $person) = @_;
-
-
-  my ($path_pages, $proto_pages) = $schema->resultset('Page')->path_pages($url);
-
-  $path_pages = $schema->resultset('Page')->create_path_pages(
-    path_pages => $path_pages,
-    proto_pages => $proto_pages,
-    creator => $person->id,
-  );
-
-  my $page = $path_pages->[ @$path_pages - 1 ];
-
-  my %content;
-  $content{creator} = $person->id;
-  $content{body}    = $body;
-
-
-  $page->update_content(%content);
-  $schema->resultset('Page')->set_paths($page);
-  print "$url done\n";
-}
 
 
 #-----------------------------------------------------------------------------#
 # Usage
 #-----------------------------------------------------------------------------#
 sub Usage{
-  print "$0 --dir=DIRECTORY --url=URLBASE [--debug] [--help]\n";
+
+  my $usage;
+  $usage .= "$0 --dir=DIRECTORY --url=URLBASE [--exclude=\"dir1 dir2\"] [--debug] [--help]\n";
+  $usage .= "Ex: $0 --dir=t/var/files --url=/myfiles --exclude='\.svn|\.git'\n";
+  $usage .= "Add these lines to your mojomojo.conf:\n";
+  $usage .= "<Formatter::Dir>\n";
+  $usage .= "    prefix_url /myfiles\n";
+  $usage .= "    whitelisting t/var/files\n";
+  $usage .= "</Formatter::Dir>\n";
+
+  print $usage;
 }

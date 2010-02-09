@@ -1,11 +1,15 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
+use strict;
+use warnings;
 use Test::More tests => 29;
 use Test::Differences;
+
 BEGIN{
     $ENV{CATALYST_CONFIG} = 't/var/mojomojo.yml';
 };
-use_ok('Test::WWW::Mechanize::Catalyst', 'MojoMojo' );
-use_ok('MojoMojo::Controller::Attachment');
+
+use_ok( 'Test::WWW::Mechanize::Catalyst', 'MojoMojo' );
+use_ok( 'MojoMojo::Controller::Attachment' );
 
 my $mech = Test::WWW::Mechanize::Catalyst->new;
 my $file_to_upload = $0;
@@ -21,7 +25,7 @@ $mech->post('/.login', {
 ok $mech->success, 'logging in as admin'
     or BAIL_OUT('must be able to login in order to upload attachments');
 ok $mech->find_link(
-    text => 'admin',
+   # text => 'admin',
     url_regex => qr'/admin$'
 ), 'can log in as admin via URL'
     or BAIL_OUT('must be able to login in order to upload attachments');

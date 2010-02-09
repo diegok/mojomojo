@@ -43,10 +43,10 @@ requires(
     'DBIx::Class::DateTime::Epoch'                 => '0.04',
     'DBIx::Class::EncodedColumn'                   => 0,
     'DBIx::Class::TimeStamp'                       => '0.11',
+    'Directory::Scratch'                           => '0.14',
     'Encode'                                       => '2.31',
     'File::Copy::Recursive'                        => 0,
     'File::MMagic'                                 => '1.27',
-    'File::Slurp'                                  => '9999.13', # Markdown
     'HTML::Entities'                               => '3.60',    # Pod::Simple
     'HTML::FormFu'                                 => '0.02000', # min version with string renderer
     'HTML::FormFu::Model::DBIC'                    => 0,
@@ -62,11 +62,10 @@ requires(
     'Moose'                                        => 0,
     'Number::Format'                               => 0,
     'parent'                                       => 0,
-    'String::Diff'                                 => 0,
     'Template'                                     => '2.20',
     'Template::Plugin::JavaScript'                 => 0,
     'Text::Context'                                => '3.5',
-    'Text::MultiMarkdown'                          => '1.0.29',
+    'Text::MultiMarkdown'                          => '1.000032',
     'Text::Password::Pronounceable'                => 0,
     'Text::Textile'                                => 0,
     'URI'                                          => '1.37',
@@ -94,6 +93,10 @@ feature 'Emoticons', 'Text::Emoticon::MSN' => 0;
 
 
 test_requires 'Test::More' => '0.88';
+test_requires 'Test::Differences';
+test_requires 'Test::NoTabs';
+# all tests require a database to be deployed, even though SQLT is not necessary for producton if a DB exists
+test_requires 'SQL::Translator' => '0.09006';
 test_requires 'Email::Send::Test';
 test_requires 'WWW::Mechanize' => '1.54';
 test_requires 'Test::WWW::Mechanize::Catalyst'   =>  '0.51 ';

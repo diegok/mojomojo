@@ -19,3 +19,4 @@ MojoMojo-*
 *.out
 .screenrc
 .directory
+root/static/themes/catapulse/src/.sass-cache

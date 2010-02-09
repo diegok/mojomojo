@@ -1,5 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
+use strict;
+use warnings;
 use Test::More tests => 13;
+
 BEGIN{
     $ENV{CATALYST_CONFIG} = 't/var/mojomojo.yml';
     use_ok('Catalyst::Test', 'MojoMojo');
@@ -55,6 +58,6 @@ $mech->submit_form(
 );
 ok $mech->success, 'trying to login as admin via POST';
 ok $mech->find_link(
-    text => 'admin',
+    #text => 'admin',
     url_regex => qr'/admin$'
 ), 'can log in as admin via URL';

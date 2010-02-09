@@ -89,8 +89,12 @@ sub init_schema {
     # due to a BUG in SQL::Translator: https://rt.cpan.org/Ticket/Display.html?id=48688
     # This will cause failures if the tables don't exist (i.e. when you first deploy):
     #     ("DBI Exception: DBD::$driver::db do failed: no such table")
+    #
+    #-mxh This is fragile because it relies on fixed output in the regex.
+    #     Recently, the output changed to include a "\n" and broke this code.
+    #     I added the s (and i) regex modifiers, but it still needs a better implementation.
     local $SIG{__WARN__} = sub {
-        die @_ unless $_[0] =~ /no such table.*DROP TABLE/;
+        die @_ unless $_[0] =~ /no such table.*DROP TABLE/is;
     };
     $schema->deploy( $attrs );
 
@@ -103,7 +107,25 @@ sub init_schema {
         },
         attachment_dir => '__path_to(t/var/uploads)__',
         allowed => {
-           src => [qw(youtube.com youporn.org iusethis.com)] ,
+            src => [qw(youtube.com youporn.org iusethis.com)] ,
+        },
+        'View::Email' => { 
+            sender => { mailer => 'Test' } 
+        },
+        'permissions' => { 
+            admin_role_name          => 'Admins',
+            role_members             => 'role_members',
+            user_field_name          => 'login',
+            anonymous_allowed        => 1,
+            anonymous_user_name      => 'anonymouscoward',
+            check_permission_on_view => 1,
+            cache_permission_data    => 1,
+            enforce_login            => 0,
+            create_allowed           => 1,
+            delete_allowed           => 0,
+            edit_allowed             => 1,
+            view_allowed             => 1,
+            attachment_allowed       => 0,
         },
         'View::Email' => { sender => { mailer => 'Test' } },
     };
@@ -144,15 +166,17 @@ Populate the schema with some test data. For now, path permissions.
 sub create_test_data {
     my ($self, $schema)=@_;
     my @roles = $schema->resultset('Role')->search();
+
+
     $schema->populate('PathPermissions',
         [
             [ qw/path role apply_to_subpages create_allowed delete_allowed edit_allowed view_allowed attachment_allowed / ],
-            [ '/admin', $roles[0]->id, qw/ no yes yes yes yes yes yes/ ],
-            [ '/admin', $roles[0]->id, qw/ yes yes yes yes yes yes yes/ ],
-            [ '/help', $roles[0]->id, qw/no yes yes yes yes yes yes/ ],
-            [ '/help', $roles[0]->id, qw/ yes yes yes yes yes yes yes/ ],
+            [ '/admin', $roles[0]->id, qw/ no yes yes yes yes yes/ ],
+            [ '/admin', $roles[0]->id, qw/ yes yes yes yes yes yes/ ],
+            [ '/help', $roles[0]->id, qw/no yes yes yes yes yes / ],
+            [ '/help', $roles[0]->id, qw/ yes yes yes yes yes yes/ ],
         ]
-    )
+    );
 }
 
 1;

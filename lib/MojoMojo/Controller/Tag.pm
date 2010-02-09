@@ -10,22 +10,23 @@ MojoMojo::Controller::Tag - Tags controller
 
 =head1 SYNOPSIS
 
-Handles urls like
-  /.recent/macro
-  /.list/flooobs
-  /.recent/flood
+Handles the following URLs
+  /.tags/
+  /.list/<tag>  (dispatched from Page)
+  /.recent/<tag>  (dispatched from Page)
 
 =head1 DESCRIPTION
 
-This controller handles tag-related actions
+This controller generates a tag cloud and retrieves (all or recent) pages
+tagged with a given tag.
 
 =head1 ACTIONS
 
 =head2 list
 
-This is a private action, and is dispatched from /.list when it's
-supplied with a tag argument. it will list all pages belonging
-to a certain tag.
+This is a private action, and is dispatched from
+L</.list|MojoMojo::Controller::Page/list> when supplied with a tag
+argument. It will list all pages tagged with the given tag.
 
 =cut
 
@@ -42,9 +43,9 @@ sub list : Private {
 
 =head2 recent
 
-This is a private action, and is dispatched from C</.recent> when it's
-supplied with a tag argument. It will list recent pages belonging
-to a certain tag.
+This is a private action, and is dispatched from
+L</.recent|MojoMojo::Controller::Page/recent> when supplied with a tag
+argument. It will list recent pages tagged with the given tag.
 
 =cut
 
@@ -65,11 +66,18 @@ Tag cloud for pages.
 
 sub tags : Global {
     my ( $self, $c, $tag ) = @_;
-    $c->stash->{tags} = [ $c->model("DBIC::Tag")->by_page( $c->stash->{page}->id ) ];
+    my $tags = [ $c->model("DBIC::Tag")->by_page( $c->stash->{page}->id ) ];
+    my %tags;
+    map {
+        $tags{$_->tag}++;
+    }@$tags;
     my $cloud = HTML::TagCloud->new();
-    foreach my $tag ( @{ $c->stash->{tags} } ) {
-        $cloud->add( $tag->tag, $c->req->base . $c->stash->{path} . '.list/' . $tag->tag,
-            $tag->refcount );
+    foreach my $tag (keys %tags) {
+        $cloud->add(
+            $tag, 
+            $c->req->base . $c->stash->{path} . '.list/' . $tag,
+            $tags{$tag}
+        );
     }
     $c->stash->{cloud}    = $cloud;
     $c->stash->{template} = 'tag/cloud.tt';
